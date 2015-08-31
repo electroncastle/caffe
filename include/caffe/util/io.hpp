@@ -136,6 +136,12 @@ cv::Mat DecodeDatumToCVMat(const Datum& datum, bool is_color);
 
 void CVMatToDatum(const cv::Mat& cv_img, Datum* datum);
 
+bool ReadSegmentFlowToDatum(const string& filename, const int label,
+    const vector<int> offsets, const int height, const int width, const int length, Datum* datum);
+
+bool ReadSegmentRGBToDatum(const string& filename, const int label,
+    const vector<int> offsets, const int height, const int width, const int length, Datum* datum, bool is_color);
+
 }  // namespace caffe
 
 #endif   // CAFFE_UTIL_IO_H_
