@@ -338,5 +338,6 @@ bool ReadSegmentFlowToDatum(const string& filename, const int label,
     }
     return true;
 }
+#endif
 
 }  // namespace caffe
