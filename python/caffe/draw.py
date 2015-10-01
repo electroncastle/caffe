@@ -82,11 +82,11 @@ def get_layer_label(layer, rankdir):
                       separator,
                       layer.type,
                       separator,
-                      layer.convolution_param.kernel_size,
+                      layer.convolution_param.kernel_size[0] if len(layer.convolution_param.kernel_size)>0 else 1,
                       separator,
-                      layer.convolution_param.stride,
+                      layer.convolution_param.stride[0] if len(layer.convolution_param.stride)>0 else 1,
                       separator,
-                      layer.convolution_param.pad)
+                      layer.convolution_param.pad[0] if len(layer.convolution_param.pad) else 0)
     elif layer.type == 'Pooling':
         pooling_types_dict = get_pooling_types_dict()
         node_label = '"%s%s(%s %s)%skernel size: %d%sstride: %d%spad: %d"' %\
