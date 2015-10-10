@@ -386,7 +386,9 @@ message LayerParameter {
   optional TileParameter tile_param = 138;
   optional WindowDataParameter window_data_param = 129;
   optional VideoDataParameter video_data_param = 140;
+
   optional OFRDataParameter ofr_data_param = 141;
+  optional TransformationParameter label_transform_param = 142;
 }
 
 // Message that stores parameters used to apply transformation
@@ -427,6 +429,8 @@ message TransformationParameter {
   
   //if set to true, it is optical flow field
   optional bool is_flow = 14 [default = false];
+
+  optional bool center_crop = 15 [default = false];
 }
 
 // Message that stores parameters shared by loss layers
@@ -1269,6 +1273,10 @@ message PReLUParameter {
 message OFRDataParameter{
   // Specify the data source.
   optional string source = 1;
+  // Specify the data source.
+  optional string root_path = 14;
+  // Specify the data source.
+  optional string label_source = 15;
   // Specify the batch size.
   optional uint32 batch_size = 4;
   // The rand_skip variable is for the data layer to skip a few data points

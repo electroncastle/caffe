@@ -236,7 +236,8 @@ void CVMatToDatum(const cv::Mat& cv_img, Datum* datum) {
 }
 
 bool ReadSegmentRGBToDatum(const string& filename, const int label,
-    const vector<int> offsets, const int height, const int width, const int length, Datum* datum, bool is_color){
+    const vector<int> offsets, const int height, const int width, const int length, Datum* datum, bool is_color)
+{
     cv::Mat cv_img;
     string* datum_string;
     char tmp[30];
@@ -290,7 +291,8 @@ bool ReadSegmentRGBToDatum(const string& filename, const int label,
 }
 
 bool ReadSegmentFlowToDatum(const string& filename, const int label,
-    const vector<int> offsets, const int height, const int width, const int length, Datum* datum){
+    const vector<int> offsets, const int height, const int width, const int length, Datum* datum)
+{
     cv::Mat cv_img_x, cv_img_y;
     string* datum_string;
     char tmp[30];
@@ -338,6 +340,238 @@ bool ReadSegmentFlowToDatum(const string& filename, const int label,
     }
     return true;
 }
+
+bool ReadOFRToDatum(const string& root_path, const string& img1_file, const string& img2_file,
+                    const string& ofx_file, const string& ofy_file,
+                    const int height, const int width,
+                    Datum* datum, Datum* label_datum, SimpleLMDB *slmdb)
+{
+
+    string key = slmdb->get_key(img1_file);
+    if (!slmdb->get_Datum(key, label_datum))
+        return false;
+
+
+    cv::Mat img1 = cv::imread(root_path+"/"+img1_file, CV_LOAD_IMAGE_COLOR);
+    cv::Mat img2 = cv::imread(root_path+"/"+img2_file, CV_LOAD_IMAGE_COLOR);
+
+    cv::Mat img1_src, img2_src;
+    if (!img1.data ){
+        LOG(ERROR) << "Could not load file " << img1_file;
+        return false;
+    }
+
+    if (!img2.data ){
+        LOG(ERROR) << "Could not load file " << img2_file;
+        return false;
+    }
+
+    if (height > 0 && width > 0){
+        cv::resize(img1, img1_src, cv::Size(width, height));
+        cv::resize(img2, img2_src, cv::Size(width, height));
+    }else{
+        img1_src = img1;
+        img2_src = img2;
+    }
+
+    string* datum_string;
+    int num_imgs = 2;
+    int num_channels = 3;
+
+    datum->set_channels(num_channels*num_imgs);
+    datum->set_height(img1.rows);
+    datum->set_width(img1.cols);
+    datum->set_label(0);
+    datum->clear_data();
+    datum->clear_float_data();
+    datum_string = datum->mutable_data();
+
+
+    for (int c = 0; c < num_channels; ++c) {
+      for (int h = 0; h < img1.rows; ++h) {
+        for (int w = 0; w < img1.cols; ++w) {
+          datum_string->push_back(
+            static_cast<char>(img1.at<cv::Vec3b>(h, w)[c]));
+        }
+      }
+    }
+
+    for (int c = 0; c < num_channels; ++c) {
+      for (int h = 0; h < img2.rows; ++h) {
+        for (int w = 0; w < img2.cols; ++w) {
+          datum_string->push_back(
+            static_cast<char>(img2.at<cv::Vec3b>(h, w)[c]));
+        }
+      }
+    }
+
+    return true;
+
+//----------------------------------------------
+// Optical Flow
+    cv::Mat ofx = cv::imread(root_path+"/"+ofx_file, CV_LOAD_IMAGE_GRAYSCALE);
+    cv::Mat ofy = cv::imread(root_path+"/"+ofy_file, CV_LOAD_IMAGE_GRAYSCALE);
+
+    if (!ofx.data ){
+        LOG(ERROR) << "Could not load file " << ofx_file;
+        return false;
+    }
+
+    if (!ofy.data ){
+        LOG(ERROR) << "Could not load file " << ofy_file;
+        return false;
+    }
+
+    string* label_datum_string;
+    num_imgs = 2;
+    num_channels = 1;
+
+        label_datum->set_channels(num_channels*num_imgs);
+        label_datum->set_height(ofx.rows);
+        label_datum->set_width(ofx.cols);
+        label_datum->set_label(0);
+        label_datum->clear_data();
+        label_datum->clear_float_data();
+        label_datum_string = label_datum->mutable_data();
+
+
+//    for (int c = 0; c < num_channels; ++c) {
+      for (int h = 0; h < ofx.rows; ++h) {
+        for (int w = 0; w < ofx.cols; ++w) {
+          label_datum_string->push_back(
+            static_cast<char>(ofx.at<char>(h, w)));
+        }
+      }
+//    }
+
+//    for (int c = 0; c < num_channels; ++c) {
+      for (int h = 0; h < ofy.rows; ++h) {
+        for (int w = 0; w < ofy.cols; ++w) {
+          label_datum_string->push_back(
+            static_cast<char>(ofy.at<char>(h, w)));
+        }
+      }
+//    }
+
+/*
+    cv::Mat cv_img;
+    string* datum_string;
+    char tmp[30];
+    int cv_read_flag = (is_color ? CV_LOAD_IMAGE_COLOR :
+        CV_LOAD_IMAGE_GRAYSCALE);
+    for (int i = 0; i < offsets.size(); ++i){
+        int offset = offsets[i];
+        for (int file_id = 1; file_id < length+1; ++file_id){
+            sprintf(tmp,"image_%04d.jpg",int(file_id+offset));
+            string filename_t = filename + "/" + tmp;
+            cv::Mat cv_img_origin = cv::imread(filename_t, cv_read_flag);
+            if (!cv_img_origin.data){
+                LOG(ERROR) << "Could not load file " << filename;
+                return false;
+            }
+            if (height > 0 && width > 0){
+                cv::resize(cv_img_origin, cv_img, cv::Size(width, height));
+            }else{
+                cv_img = cv_img_origin;
+            }
+            int num_channels = (is_color ? 3 : 1);
+            if (file_id==1 && i==0){
+                datum->set_channels(num_channels*length*offsets.size());
+                datum->set_height(cv_img.rows);
+                datum->set_width(cv_img.cols);
+                datum->set_label(label);
+                datum->clear_data();
+                datum->clear_float_data();
+                datum_string = datum->mutable_data();
+            }
+            if (is_color) {
+                for (int c = 0; c < num_channels; ++c) {
+                  for (int h = 0; h < cv_img.rows; ++h) {
+                    for (int w = 0; w < cv_img.cols; ++w) {
+                      datum_string->push_back(
+                        static_cast<char>(cv_img.at<cv::Vec3b>(h, w)[c]));
+                    }
+                  }
+                }
+              } else {  // Faster than repeatedly testing is_color for each pixel w/i loop
+                for (int h = 0; h < cv_img.rows; ++h) {
+                  for (int w = 0; w < cv_img.cols; ++w) {
+                    datum_string->push_back(
+                      static_cast<char>(cv_img.at<uchar>(h, w)));
+                    }
+                  }
+              }
+        }
+    }
+*/
+    return true;
+}
+
+
+void showDatum(Datum &datum, int width, int height, int offset)
+{
+    cv::Mat im(height, width, CV_8UC1);
+
+    int p = offset;
+    for (int h = 0; h < im.rows; ++h) {
+      for (int w = 0; w < im.cols; ++w) {
+          float f = datum.float_data(p++);
+          f = f*127+127;
+          im.at<uchar>(h, w) = uchar(round(f));
+        }
+    }
+
+    cv::imshow("label", im);
+    cv::waitKey(0);
+}
+
+void showXY(Datum &datum, std::string img1_file, std::string img2_file)
+{
+    int width=32;
+    int height=32;
+
+    cv::Mat xim(height, width, CV_8UC1);
+    cv::Mat yim(height, width, CV_8UC1);
+
+    int p = 0;
+    for (int h = 0; h < xim.rows; ++h) {
+      for (int w = 0; w < xim.cols; ++w) {
+          float f = datum.float_data(p++);
+          f = f*127+127;
+          xim.at<uchar>(h, w) = uchar(round(f));
+        }
+    }
+
+    for (int h = 0; h < xim.rows; ++h) {
+      for (int w = 0; w < xim.cols; ++w) {
+          float f = datum.float_data(p++);
+          f = f*127+127;
+          yim.at<uchar>(h, w) = uchar(round(f));
+        }
+    }
+
+    cv::Mat img1 = cv::imread(img1_file);
+    cv::Mat img2 = cv::imread(img2_file);
+
+    cv::Mat xims, yims;
+    cv::resize(xim, xims, cv::Size(img1.rows, img1.cols));
+    cv::resize(yim, yims, cv::Size(img1.rows, img1.cols));
+
+    cv::cvtColor(xims, xims, CV_GRAY2RGB);
+    cv::cvtColor(yims, yims, CV_GRAY2RGB);
+
+    cv::Mat dst, dst1;
+    cv::hconcat(img1, img2, dst);
+    cv::hconcat(xims, xims, dst1);
+    cv::Mat H;
+    cv::hconcat(dst, dst1, H);
+
+    cv::imshow("label", H);
+    cv::waitKey(2);
+
+}
+
+
 #endif
 
 }  // namespace caffe

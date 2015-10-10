@@ -74,6 +74,20 @@ if(USE_OPENCV)
   list(APPEND Caffe_LINKER_LIBS ${OpenCV_LIBS})
   message(STATUS "OpenCV found (${OpenCV_CONFIG_PATH})")
   add_definitions(-DUSE_OPENCV)
+
+  # add QT deps
+  set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OPENCV_ROOT} "/home/jiri/Qt/5.5/gcc_64/lib/cmake/Qt5" )
+
+  # Tell CMake to run moc when necessary:
+  set(CMAKE_AUTOMOC ON)
+  # As moc files are generated in the binary dir, tell CMake
+  # to always look for includes there:
+  set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+FIND_PACKAGE(Qt5 REQUIRED Core)
+#target_link_libraries( flowMaker ${QT_LIBRARIES}
+list(APPEND Caffe_LINKER_LIBS ${QT_LIBRARIES})
+
 endif()
 
 # ---[ BLAS

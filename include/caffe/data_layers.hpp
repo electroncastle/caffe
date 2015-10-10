@@ -17,6 +17,8 @@
 #include "caffe/util/blocking_queue.hpp"
 #include "caffe/util/db.hpp"
 
+#include "caffe/util/io.hpp"
+
 namespace caffe {
 
 /**
@@ -394,6 +396,7 @@ protected:
 };
 
 
+
 /**
  * @brief Provides data to the Net from video files.
  *
@@ -403,7 +406,9 @@ template <typename Dtype>
 class OFRDataLayer : public BasePrefetchingDataLayer<Dtype> {
 public:
     explicit OFRDataLayer(const LayerParameter& param)
-    : BasePrefetchingDataLayer<Dtype>(param) {}
+    : BasePrefetchingDataLayer<Dtype>(param),
+    label_transform_param_(param.label_transform_param())
+    {}
     virtual ~OFRDataLayer();
     virtual void DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
             const vector<Blob<Dtype>*>& top);
@@ -440,7 +445,14 @@ protected:
     vector<std::pair<std::string, std::string> > of_files_;
     vector<int> lines_duration_;
     vector<std::pair<std::string, int> > lines_;
-    int lines_id_;
+    //int lines_id_;
+    int of_id_;
+
+    TransformationParameter label_transform_param_;
+    shared_ptr<DataTransformer<Dtype> > label_transformer_;
+    Blob<Dtype> transformed_label_;
+
+    SimpleLMDB *slmdb;
 };
 
 

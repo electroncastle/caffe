@@ -9,6 +9,9 @@
 
 namespace caffe {
 
+void fillFixOffset(int datum_height, int datum_width, int crop_height, int crop_width,
+                   vector<pair<int , int> >& offsets);
+
 /**
  * @brief Applies common transformations to the input data, such as
  * scaling, mirroring, substracting the image mean...
@@ -35,7 +38,8 @@ class DataTransformer {
    *    This is destination blob. It can be part of top blob's data if
    *    set_cpu_data() is used. See data_layer.cpp for an example.
    */
-  void Transform(const Datum& datum, Blob<Dtype>* transformed_blob);
+  void Transform(const Datum& datum, Blob<Dtype>* transformed_blob,
+                 int crop_possition=-1, int mirror = -1);
 
   /**
    * @brief Applies the transformation defined in the data layer's
@@ -138,7 +142,8 @@ class DataTransformer {
    */
   virtual int Rand(int n);
 
-  void Transform(const Datum& datum, Dtype* transformed_data);
+  void Transform(const Datum& datum, Dtype* transformed_data,
+                 int crop_position = -1, int mirror = -1);
   // Tranformation parameters
   TransformationParameter param_;
 
@@ -147,6 +152,11 @@ class DataTransformer {
   Phase phase_;
   Blob<Dtype> data_mean_;
   vector<Dtype> mean_values_;
+
+  //JFMOD BEGIN
+  vector<float> custom_scale_ratios_;
+  int max_distort_;
+  //JFMOD END
 };
 
 }  // namespace caffe
