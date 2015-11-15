@@ -18,6 +18,8 @@
 #include "caffe/util/db.hpp"
 
 #include "caffe/util/io.hpp"
+#define HDF5_DATA_DATASET_NAME "data"
+#define HDF5_DATA_LABEL_NAME "label"
 
 namespace caffe {
 
