@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "caffe/data_layers.hpp"
+#include "caffe/layers/ofr_data_layer.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/io.hpp"
