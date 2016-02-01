@@ -124,6 +124,8 @@ void BasePrefetchingDataLayer<Dtype>::Forward_cpu(
   prefetch_free_.push(batch);
 }
 
+
+
 #ifdef CPU_ONLY
 STUB_GPU_FORWARD(BasePrefetchingDataLayer, Forward);
 #endif

@@ -1,3 +1,12 @@
+/*
+ * Author: Jiri Fajtl <ok1zjf@gmail.com>
+ * Date: 20/01/2016
+ * Distributed under The MIT License (MIT)
+ * Version: 0.1
+ *
+ *
+ */
+
 #ifndef CAFFE_OFR_DATA_LAYER_HPP_
 #define CAFFE_OFR_DATA_LAYER_HPP_
 

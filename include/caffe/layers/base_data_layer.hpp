@@ -49,6 +49,9 @@ template <typename Dtype>
 class Batch {
  public:
   Blob<Dtype> data_, label_;
+  Blob<Dtype> data2_;
+  //std::vector<shared_ptr<Blob<Dtype> > > blobs_;
+  vector<Blob<Dtype>*> blobs_;
 };
 
 template <typename Dtype>
@@ -69,6 +72,11 @@ class BasePrefetchingDataLayer :
 
   // Prefetches batches (asynchronously if to GPU memory)
   static const int PREFETCH_COUNT = 3;
+
+
+  Batch<Dtype>* getPrefetch();
+  void returnBatch(Batch<Dtype>* batch);
+
 
  protected:
   virtual void InternalThreadEntry();

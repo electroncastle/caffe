@@ -63,8 +63,8 @@ void fillFixOffset(int datum_height, int datum_width, int crop_height, int crop_
   offsets.clear();
   offsets.push_back(pair<int, int>(0, 0)); //upper left left
   offsets.push_back(pair<int, int>(0, 2 * width_off)); //upper right right
-  offsets.push_back(pair<int, int>(2 * height_off, 0)); //lower left
-  offsets.push_back(pair<int, int>(2 * height_off, 2 *width_off)); //lower right
+  offsets.push_back(pair<int, int>(2 * height_off, 0)); //lower left left
+  offsets.push_back(pair<int, int>(2 * height_off, 2 *width_off)); //lower right right
   offsets.push_back(pair<int, int>(height_off, width_off)); //center
 
 //-------
@@ -429,7 +429,7 @@ void DataTransformer<Dtype>::Transform(const vector<Datum> & datum_vector,
 #ifdef USE_OPENCV
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
-                                       Blob<Dtype>* transformed_blob) {
+                                       Blob<Dtype>* transformed_blob, int crop_position, int mirror) {
   const int mat_num = mat_vector.size();
   const int num = transformed_blob->num();
   const int channels = transformed_blob->channels();
@@ -449,7 +449,8 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
 
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
-                                       Blob<Dtype>* transformed_blob) {
+                                       Blob<Dtype>* transformed_blob, int crop_position, int mirror)
+{
   const int crop_size = param_.crop_size();
   const int img_channels = cv_img.channels();
   const int img_height = cv_img.rows;
@@ -469,11 +470,15 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   CHECK(cv_img.depth() == CV_8U) << "Image data type must be unsigned byte";
 
   const Dtype scale = param_.scale();
-  const bool do_mirror = param_.mirror() && Rand(2);
+  bool do_mirror = param_.mirror() && Rand(2);
   const bool has_mean_file = param_.has_mean_file();
   const bool has_mean_values = mean_values_.size() > 0;
   // JFMOD BEGIN
   const bool do_multi_scale = param_.multi_scale();
+
+  if (mirror > -1){
+      do_mirror = mirror;
+  }
 
   vector<pair<int, int> > offset_pairs;
   vector<pair<int, int> > crop_size_pairs;
@@ -528,10 +533,14 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
         if (param_.fix_crop()){
           fillFixOffset(img_height, img_width, crop_height, crop_width, offset_pairs);
           int sel;
-          if (param_.center_crop()){
-              sel = 4;
+          if (crop_position < 0){
+              if (param_.center_crop()){
+                  sel = 4;
+              }else{
+                  sel = Rand(offset_pairs.size());
+              }
           }else{
-            sel = Rand(offset_pairs.size());
+              sel = crop_position;
           }
           h_off = offset_pairs[sel].first;
           w_off = offset_pairs[sel].second;
